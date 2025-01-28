@@ -26,24 +26,41 @@ Upload your files, and with a single click, download the combined document as a 
 
 st.markdown(multi)
 
-# file uploader
-uploaded_files = st.file_uploader('Upload PDF file(s)', accept_multiple_files=True, type=['.pdf'])
 
-merger = PdfWriter()
+# initialize the buffer variable
+merged_pdf_buffer = None
 
-if uploaded_files:
-    for file in uploaded_files:
-        merger.append(file)
+# file uploader form
+with st.form('my_form', clear_on_submit=True):
+    files = st.file_uploader('Upload PDF files', accept_multiple_files=True, type=['.pdf'])
+    submitted = st.form_submit_button('Combine Files')
 
-    buffers = BytesIO()
-    merger.write(buffers)
-    buffers.seek(0)
-    merger.close()
+    if submitted:
+        if not files:
+            st.warning('Please Upload PDF Files.')
 
-    # download button
+        else:
+            try:
+                merger = PdfWriter()
+                for file in files:
+                    merger.append(file)
+
+                merged_pdf_buffer = BytesIO()
+                merger.write(merged_pdf_buffer)
+                merged_pdf_buffer.seek(0)
+                merger.close()
+
+                st.success('Files merged successfully!')
+
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+
+
+# download button
+if merged_pdf_buffer:
     st.download_button(
         label = 'Download Merged File',
-        data = buffers,
+        data = merged_pdf_buffer,
         file_name = 'merged_file.pdf',
         mime = 'application/pdf'
     )
